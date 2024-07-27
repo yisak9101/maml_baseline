@@ -16,6 +16,7 @@ if [ ! -f vendor/mujoco/$mujoco_file ]; then
     read -e -p "Please enter the path to the mujoco zip file [$zip_file]:" path
     path=${path:-$zip_file} 
     eval path=\"$path\"
+    echo $path
     if [ ! -f $path ]; then
         echo "No file found at $path"
         exit 0

@@ -117,11 +117,11 @@ for step_i, initial_params_file in zip(range(len(step_sizes)), initial_params_fi
             param_file = initial_params_file
             save_prefix = save_loc + names[step_i] + '_goal_' + str(goal)
             video_filename = save_prefix + 'prestep.' + file_ext
-            os.system('python scripts/sim_policy.py ' + param_file + ' --speedup=4 --max_path_length=300 --video_filename='+video_filename)
+            os.system('python3 scripts/sim_policy.py ' + param_file + ' --speedup=4 --max_path_length=300 --video_filename='+video_filename)
             for itr_i in range(3):
                 param_file = data_loc + 'itr_' + str(itr_i)  + '.pkl'
                 video_filename = save_prefix + 'step_'+str(itr_i)+'.'+file_ext
-                os.system('python scripts/sim_policy.py ' + param_file + ' --speedup=4 --max_path_length=300 --video_filename='+video_filename)
+                os.system('python3 scripts/sim_policy.py ' + param_file + ' --speedup=4 --max_path_length=300 --video_filename='+video_filename)
 
 
 
