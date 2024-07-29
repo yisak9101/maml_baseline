@@ -592,7 +592,7 @@ def _to_param_val(v):
         return _shellquote(str(v))
 
 
-def to_local_command(params, python_command="python", script=osp.join(config.PROJECT_PATH,
+def to_local_command(params, python_command="python3", script=osp.join(config.PROJECT_PATH,
                                                                       'scripts/run_experiment.py'),
                      use_gpu=False):
     command = python_command + " " + script
@@ -614,7 +614,7 @@ def to_local_command(params, python_command="python", script=osp.join(config.PRO
     return command
 
 
-def to_docker_command(params, docker_image, python_command="python", script='scripts/run_experiment.py',
+def to_docker_command(params, docker_image, python_command="python3", script='scripts/run_experiment.py',
                       pre_commands=None, use_tty=False,
                       post_commands=None, dry=False, use_gpu=False, env=None, local_code_dir=None):
     """
@@ -673,7 +673,7 @@ def dedent(s):
 
 
 def launch_ec2(params_list, exp_prefix, docker_image, code_full_path,
-               python_command="python",
+               python_command="python3",
                script='scripts/run_experiment.py',
                aws_config=None, dry=False, terminate_machine=True, use_gpu=False, sync_s3_pkl=False,
                sync_log_on_termination=True,
@@ -1006,7 +1006,7 @@ def upload_file_to_s3(script_content):
 
 def to_lab_kube_pod(
         params, docker_image, code_full_path,
-        python_command="python",
+        python_command="python3",
         script='scripts/run_experiment.py',
         is_gpu=False,
         sync_s3_pkl=False,

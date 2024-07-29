@@ -61,7 +61,7 @@ class HopperEnv(MujocoEnv, Serializable):
         return Step(next_obs, reward, done)
 
     @overrides
-    def log_diagnostics(self, paths):
+    def log_diagnostics(self, paths, prefix=''):
         progs = [
             path["observations"][-1][-3] - path["observations"][0][-3]
             for path in paths

@@ -214,6 +214,7 @@ def pop_prefix():
 
 
 def save_itr_params(itr, params):
+    file_name = None
     if _snapshot_dir:
         if _snapshot_mode == 'all':
             file_name = osp.join(_snapshot_dir, 'itr_%d.pkl' % itr)
@@ -230,6 +231,7 @@ def save_itr_params(itr, params):
             pass
         else:
             raise NotImplementedError
+    return file_name
 
 
 def log_parameters(log_file, args, classes):

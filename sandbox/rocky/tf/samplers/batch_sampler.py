@@ -9,7 +9,10 @@ import itertools
 
 
 def worker_init_tf(G):
-    G.sess = tf.Session()
+    gpu_options = tf.GPUOptions(allow_growth=True)
+    config = tf.ConfigProto(gpu_options=gpu_options)
+
+    G.sess = tf.Session(config=config)
     G.sess.__enter__()
 
 

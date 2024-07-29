@@ -183,4 +183,4 @@ class BaseSampler(Sampler):
             logger.record_tabular(prefix+'MaxReturn', np.max(undiscounted_returns))
             logger.record_tabular(prefix+'MinReturn', np.min(undiscounted_returns))
 
-        return samples_data
+        return samples_data, np.mean(undiscounted_returns)

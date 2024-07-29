@@ -25,7 +25,10 @@ if __name__ == "__main__":
     tri = 0
     while True:
         tri += 1
-        with tf.Session() as sess:
+        gpu_options = tf.GPUOptions(allow_growth=True)
+        config = tf.ConfigProto(gpu_options=gpu_options)
+
+        with tf.Session(config=config) as sess:
             data = joblib.load(args.file)
             policy = data['policy']
             env = data['env']

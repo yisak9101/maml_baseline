@@ -6,6 +6,9 @@ from sandbox.rocky.tf.policies.base import Policy
 import tensorflow as tf
 from sandbox.rocky.tf.samplers.batch_sampler import BatchSampler
 from sandbox.rocky.tf.samplers.vectorized_sampler import VectorizedSampler
+import json
+
+import wandb
 
 
 class BatchPolopt(RLAlgorithm):
@@ -38,6 +41,10 @@ class BatchPolopt(RLAlgorithm):
             force_batch_sampler=False,
             load_policy=None,
             reset_arg=None,
+            eval=None,
+            env_name=None,
+            seed=None,
+            eval_interval_itr=None,
             **kwargs
     ):
         """
@@ -88,6 +95,17 @@ class BatchPolopt(RLAlgorithm):
             sampler_args = dict()
         self.sampler = sampler_cls(self, **sampler_args)
         self.reset_arg = reset_arg
+        self.steps = 0
+        self.eval_interval_itr = eval_interval_itr
+        self.eval = eval
+        if eval is not None:
+            wandb.login(key="7316f79887c82500a01a529518f2af73d5520255")
+            wandb.init(
+                entity='mlic_academic',
+                project='김정모_metaRL_baselines',
+                group=env_name,
+                name='maml-' + env_name + "-seed" + str(seed)
+            )
 
     def start_worker(self):
         self.sampler.start_worker()
@@ -104,7 +122,10 @@ class BatchPolopt(RLAlgorithm):
         return self.sampler.process_samples(itr, paths)
 
     def train(self):
-        with tf.Session() as sess:
+        gpu_options = tf.GPUOptions(allow_growth=True)
+        config = tf.ConfigProto(gpu_options=gpu_options)
+
+        with tf.Session(config=config) as sess:
             if self.load_policy is not None:
                 import joblib
                 self.policy = joblib.load(self.load_policy)['policy']
@@ -126,8 +147,9 @@ class BatchPolopt(RLAlgorithm):
 
                     logger.log("Obtaining samples...")
                     paths = self.obtain_samples(itr)
+                    self.steps += paths.__len__()
                     logger.log("Processing samples...")
-                    samples_data = self.process_samples(itr, paths)
+                    samples_data, train_avg_return = self.process_samples(itr, paths)
                     logger.log("Logging diagnostics...")
                     self.log_diagnostics(paths)
                     logger.log("Optimizing policy...")
@@ -138,7 +160,7 @@ class BatchPolopt(RLAlgorithm):
                     params = self.get_itr_snapshot(itr, samples_data)  # , **kwargs)
                     if self.store_paths:
                         params["paths"] = samples_data["paths"]
-                    logger.save_itr_params(itr, params)
+                    param_path = logger.save_itr_params(itr, params)
                     logger.log("Saved")
                     logger.record_tabular('Time', time.time() - start_time)
                     logger.record_tabular('ItrTime', time.time() - itr_start_time)
@@ -169,6 +191,19 @@ class BatchPolopt(RLAlgorithm):
                         if self.pause_for_plot:
                             input("Plotting evaluation run: Press Enter to "
                                   "continue...")
+
+                    if self.eval_interval_itr is not None and \
+                            itr % self.eval_interval_itr == 0 and \
+                            param_path is not None and \
+                            self.eval is not None:
+                        logger.log("Evaluating...")
+                        test_avg_return = self.eval.run(param_path)
+                        wandb_log_dict = {
+                            "Eval/train_avg_return": train_avg_return,
+                            "Eval/test_avg_return": test_avg_return,
+                        }
+                        logger.log(f"timestep {self.steps}:{json.dumps(wandb_log_dict)}")
+                        wandb.log(wandb_log_dict, step=self.steps)
         self.shutdown_worker()
 
     def log_diagnostics(self, paths):

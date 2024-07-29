@@ -130,8 +130,10 @@ class BatchMAMLPolopt(RLAlgorithm):
     def train(self):
         # TODO - make this a util
         flatten_list = lambda l: [item for sublist in l for item in sublist]
+        gpu_options = tf.GPUOptions(allow_growth=True)
+        config = tf.ConfigProto(gpu_options=gpu_options)
 
-        with tf.Session() as sess:
+        with tf.Session(config=config) as sess:
             # Code for loading a previous policy. Somewhat hacky because needs to be in sess.
             if self.load_policy is not None:
                 import joblib

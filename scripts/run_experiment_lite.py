@@ -94,8 +94,8 @@ def run_experiment(argv):
     else:
         variant_data = None
 
-    if not args.use_cloudpickle:
-        logger.log_parameters_lite(params_log_file, args)
+    # if not args.use_cloudpickle:
+    #     logger.log_parameters_lite(params_log_file, args)
 
     logger.add_text_output(text_log_file)
     logger.add_tabular_output(tabular_log_file)

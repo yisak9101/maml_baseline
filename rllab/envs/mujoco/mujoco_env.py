@@ -233,3 +233,11 @@ class MujocoEnv(Env):
 
     def action_from_key(self, key):
         raise NotImplementedError
+
+    @property
+    def dt(self):
+        return self.model.opt.timestep * self.frame_skip
+
+    def state_vector(self):
+        """Return the position and velocity joint states of the model"""
+        return np.concatenate([self.data.qpos.flat, self.data.qvel.flat])

@@ -1,4 +1,6 @@
+wandb
 data
+*.pkl
 *.pyc
 *-checkpoint.ipynb
 .DS_Store
