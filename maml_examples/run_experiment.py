@@ -57,7 +57,7 @@ def main(env_name: str, seed: int):
     )
 
     baseline = LinearFeatureBaseline(env_spec=env.spec)
-    eval = Eval(env=eval_env)
+    eval = Eval(exp_name=exp_name ,env=eval_env)
     max_path_length = 200
 
     algo = TRPO(

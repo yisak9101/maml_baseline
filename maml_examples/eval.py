@@ -9,24 +9,20 @@ import numpy as np
 import pickle
 
 class Eval:
-    def __init__(self, env):
+    def __init__(self, env, exp_name):
         self.env = env
+        self.exp_name = exp_name
 
     def run(self, file_path):
         stub(globals())
-
-        run_id = 1  # for if you want to run this script in multiple terminals (need to have different ids)
 
         test_num_goals = 1
         np.random.seed(2)
         goals = np.random.uniform(0.0, 3.0, size=(test_num_goals,))
 
-        gen_name = 'icml_antdirec_results_'
-        names = ['maml']
         step_sizes = [0.1]
         initial_params_files = [file_path]
 
-        exp_names = [gen_name + name for name in names]
 
         all_avg_returns = []
         for step_i, initial_params_file in zip(range(len(step_sizes)), initial_params_files):
@@ -68,13 +64,13 @@ class Eval:
                     # Specifies the seed for the experiment. If this is not provided, a random seed
                     # will be used
                     seed=goal_i,
-                    exp_prefix='antdirec_test',
-                    exp_name='test' + str(run_id),
+                    exp_prefix='test-maml',
+                    exp_name=self.exp_name,
                     plot=True,
                 )
 
                 # get return from the experiment
-                with open('data/local/antdirec-test/test' + str(run_id) + '/progress.csv', 'r') as f:
+                with open(f'data/local/test-maml/{self.exp_name}/progress.csv', 'r') as f:
                     reader = csv.reader(f, delimiter=',')
                     i = 0
                     row = None
@@ -94,8 +90,6 @@ class Eval:
                 task_avg_returns.append([ret[itr] for ret in all_avg_returns[step_i]])
 
             results = {'task_avg_returns': task_avg_returns}
-            with open(exp_names[step_i] + '.pkl', 'wb') as f:
-                pickle.dump(results, f)
 
         for i in range(len(initial_params_files)):
             returns = []
