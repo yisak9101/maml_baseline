@@ -70,6 +70,7 @@ class CheetahVelInter(MujocoEnv, Serializable):
         self.model.forward()
         self.current_com = self.model.data.com_subtree[0]
         self.dcom = np.zeros_like(self.current_com)
+        return self.get_current_obs()
 
     @overrides
     def log_diagnostics(self, paths, prefix=''):
