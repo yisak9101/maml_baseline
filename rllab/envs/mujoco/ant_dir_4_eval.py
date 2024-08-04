@@ -7,4 +7,4 @@ class AntDir4Eval(AntDir4):
     def __init__(self, *args, **kwargs):
         super(AntDir4Eval, self).__init__(*args, **kwargs)
         self.goals =[0.25 * np.pi, 0.75 * np.pi, 1.25 * np.pi, 1.75 * np.pi]
-        self.goal = self.sample_goal()
+        self.goal = self.sample_goals(1)[0]

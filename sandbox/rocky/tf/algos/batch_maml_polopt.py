@@ -8,6 +8,8 @@ import rllab.misc.logger as logger
 import rllab.plotter as plotter
 import tensorflow as tf
 import time
+import wandb
+import json
 
 from rllab.algos.base import RLAlgorithm
 from sandbox.rocky.tf.policies.base import Policy
@@ -50,6 +52,12 @@ class BatchMAMLPolopt(RLAlgorithm):
             force_batch_sampler=False,
             use_maml=True,
             load_policy=None,
+            eval=None,
+            env_name=None,
+            seed=None,
+            eval_interval_itr=None,
+            kl_constraint=None,
+            reward_scaling=None,
             **kwargs
     ):
         """
@@ -107,6 +115,18 @@ class BatchMAMLPolopt(RLAlgorithm):
             sampler_args = dict()
         sampler_args['n_envs'] = self.meta_batch_size
         self.sampler = sampler_cls(self, **sampler_args)
+        self.steps = 0
+        self.eval_interval_itr = eval_interval_itr
+        self.eval = eval
+        if eval is not None:
+            wandb.login(key="7316f79887c82500a01a529518f2af73d5520255")
+            wandb.init(
+                entity='mlic_academic',
+                project='김정모_metaRL_baselines',
+                group=env_name,
+                name= f'maml-{env_name}-seed_{str(seed)}-klconstraint_{kl_constraint}-rewardscaling_{reward_scaling}'
+            )
+        self.reward_scaling = reward_scaling
 
     def start_worker(self):
         self.sampler.start_worker()
@@ -124,8 +144,8 @@ class BatchMAMLPolopt(RLAlgorithm):
         assert type(paths) == dict
         return paths
 
-    def process_samples(self, itr, paths, prefix='', log=True):
-        return self.sampler.process_samples(itr, paths, prefix=prefix, log=log)
+    def process_samples(self, itr, paths, prefix='', log=True, reward_scaling=1.0):
+        return self.sampler.process_samples(itr, paths, prefix=prefix, log=log, reward_scaling=reward_scaling)
 
     def train(self):
         # TODO - make this a util
@@ -163,19 +183,21 @@ class BatchMAMLPolopt(RLAlgorithm):
 
                     self.policy.switch_to_init_dist()  # Switch to pre-update policy
 
-                    all_samples_data, all_paths = [], []
+                    all_samples_data, all_paths, train_avg_returns = [], [], []
                     for step in range(self.num_grad_updates+1):
                         #if step > 0:
                         #    import pdb; pdb.set_trace() # test param_vals functions.
                         logger.log('** Step ' + str(step) + ' **')
                         logger.log("Obtaining samples...")
                         paths = self.obtain_samples(itr, reset_args=learner_env_goals, log_prefix=str(step))
+                        self.steps += paths.__len__()
                         all_paths.append(paths)
                         logger.log("Processing samples...")
                         samples_data = {}
                         for key in paths.keys():  # the keys are the tasks
                             # don't log because this will spam the consol with every task.
-                            samples_data[key] = self.process_samples(itr, paths[key], log=False)
+                            samples_data[key], train_avg_return = self.process_samples(itr, paths[key], log=False, reward_scaling=self.reward_scaling)
+                            train_avg_returns.append(train_avg_return)
                         all_samples_data.append(samples_data)
                         # for logging purposes only
                         self.process_samples(itr, flatten_list(paths.values()), prefix=str(step), log=True)
@@ -193,6 +215,7 @@ class BatchMAMLPolopt(RLAlgorithm):
                     params = self.get_itr_snapshot(itr, all_samples_data[-1])  # , **kwargs)
                     if self.store_paths:
                         params["paths"] = all_samples_data[-1]["paths"]
+                    param_path = logger.save_itr_params(itr, params)
                     logger.save_itr_params(itr, params)
                     logger.log("Saved")
                     logger.record_tabular('Time', time.time() - start_time)
@@ -251,6 +274,19 @@ class BatchMAMLPolopt(RLAlgorithm):
 
                             plt.legend(['preupdate path', 'postupdate path'], loc=2)
                             plt.savefig(osp.join(logger.get_snapshot_dir(), 'swim1d_prepost_itr'+str(itr)+'_id'+str(ind)+'.pdf'))
+
+                    if self.eval_interval_itr is not None and \
+                            itr % self.eval_interval_itr == 0 and \
+                            param_path is not None and \
+                            self.eval is not None:
+                        logger.log("Evaluating...")
+                        test_avg_return = self.eval.run(param_path)
+                        wandb_log_dict = {
+                            "Eval/train_avg_return": np.array(train_avg_returns).mean(),
+                            "Eval/test_avg_return": test_avg_return,
+                        }
+                        logger.log(f"timestep {self.steps}:{json.dumps(wandb_log_dict)}")
+                        wandb.log(wandb_log_dict, step=self.steps)
         self.shutdown_worker()
 
     def log_diagnostics(self, paths, prefix):

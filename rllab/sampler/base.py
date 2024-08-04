@@ -45,7 +45,7 @@ class BaseSampler(Sampler):
         """
         self.algo = algo
 
-    def process_samples(self, itr, paths, prefix='', log=True):
+    def process_samples(self, itr, paths, prefix='', log=True, reward_scaling=1.):
         baselines = []
         returns = []
 
@@ -68,7 +68,7 @@ class BaseSampler(Sampler):
 
         for idx, path in enumerate(paths):
             path_baselines = np.append(all_path_baselines[idx], 0)
-            deltas = path["rewards"] + \
+            deltas = reward_scaling * path["rewards"] + \
                      self.algo.discount * path_baselines[1:] - \
                      path_baselines[:-1]
             path["advantages"] = special.discount_cumsum(

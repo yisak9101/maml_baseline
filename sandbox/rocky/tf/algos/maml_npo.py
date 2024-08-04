@@ -22,6 +22,7 @@ class MAMLNPO(BatchMAMLPolopt):
             optimizer_args=None,
             step_size=0.01,
             use_maml=True,
+            kl_constraint='mean',
             **kwargs):
         assert optimizer is not None  # only for use with MAML TRPO
         if optimizer is None:
@@ -38,7 +39,8 @@ class MAMLNPO(BatchMAMLPolopt):
         self.step_size = step_size
         self.use_maml = use_maml
         self.kl_constrain_step = -1  # needs to be 0 or -1 (original pol params, or new pol params)
-        super(MAMLNPO, self).__init__(**kwargs)
+        self.kl_constraint = kl_constraint
+        super(MAMLNPO, self).__init__(kl_constraint=kl_constraint, **kwargs)
 
     def make_vars(self, stepnum='0'):
         # lists over the meta_batch_size
@@ -130,13 +132,21 @@ class MAMLNPO(BatchMAMLPolopt):
         if self.use_maml:
             mean_kl = tf.reduce_mean(tf.concat(kls, 0))  ##CF shouldn't this have the option of self.kl_constrain_step == -1?
             max_kl = tf.reduce_max(tf.concat(kls, 0))
+            min_kl = tf.reduce_min(tf.concat(kls, 0))
+
+            if self.kl_constraint == 'mean':
+                kl = mean_kl
+            elif self.kl_constraint == 'max':
+                kl = max_kl
+            elif self.kl_constraint == 'min':
+                kl = min_kl
 
             self.optimizer.update_opt(
                 loss=surr_obj,
                 target=self.policy,
-                leq_constraint=(mean_kl, self.step_size),
+                leq_constraint=(kl, self.step_size),
                 inputs=input_list,
-                constraint_name="mean_kl"
+                constraint_name=f"{self.kl_constraint}_kl"
             )
         else:
             self.optimizer.update_opt(

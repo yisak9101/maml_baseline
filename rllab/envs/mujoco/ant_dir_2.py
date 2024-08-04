@@ -12,16 +12,15 @@ from rllab.misc import logger
 class AntDir2(MujocoEnv, Serializable):
     FILE = 'ant.xml'
 
-
     def __init__(self, *args, **kwargs):
         self.goals = np.array([0.0, 0.5 * np.pi])
-        self.goal = self.sample_goal()
+        self.goal = None
         super(AntDir2, self).__init__(*args, **kwargs)
         Serializable.__init__(self, *args, **kwargs)
+        self.reset()
 
-
-    def sample_goal(self):
-        return random.choice(self.goals)
+    def sample_goals(self, num_goals):
+        return np.random.choice(self.goals, num_goals)
 
     def get_current_obs(self):
         return np.concatenate([
@@ -34,7 +33,10 @@ class AntDir2(MujocoEnv, Serializable):
 
     @overrides
     def reset(self, init_state=None, reset_args=None, **kwargs):
-        self.goal = self.sample_goal()
+        if reset_args is not None:
+            self.goal = reset_args
+        elif self.goal is None:
+            self.goal = self.sample_goals(1)[0]
         self.reset_mujoco(init_state)
         self.model.data.qpos = self.init_qpos + np.random.uniform(size=self.model.nq, low=-.1, high=.1)
         self.model.data.qvel = self.init_qvel + np.random.randn(self.model.nv) * .1

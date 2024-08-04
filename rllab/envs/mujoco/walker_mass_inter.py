@@ -21,25 +21,32 @@ class WalkerMassInter(MujocoEnv, Serializable):
     def __init__(
             self,
             *args, **kwargs):
+        self.goals = []
+        self.goal = None
         self.init_mass = None
+        for i in range(150):
+            prob = random.random()  # np.random.uniform()
+            if prob >= 0.5:
+                g = random.uniform(0, 0.5)
+            else:
+                g = random.uniform(3.0, 3.5)  # 3.0 - 0.5 = 2.5
+            self.goals.append(g)
+
         self.ctrl_cost_coeff = 1e-2
         super(WalkerMassInter, self).__init__(*args, **kwargs)
         Serializable.quick_init(self, locals())
+        self.reset()
 
-    def sample_mass_multiplier(self):
-        prob = random.random()
-        if prob >= 0.5:
-            return random.uniform(0, 0.5)
-        else:
-            return random.uniform(3.0, 3.5)  # 3.0 - 0.5 = 2.5
+    def sample_goals(self, num_goals):
+        return np.random.choice(self.goals, num_goals)
 
-    def sample_mass(self):
+    def sample_mass(self, mass_multiplier):
         if self.init_mass is None:
             self.init_mass = self.model.body_mass
 
         mass_size_ = np.prod(self.model.body_mass.shape)
 
-        body_mass_multiplyers = np.array([self.sample_mass_multiplier() for _ in range(mass_size_)])
+        body_mass_multiplyers = np.array([mass_multiplier for _ in range(mass_size_)])
         body_mass_multiplyers = np.array(1.5) ** body_mass_multiplyers
         body_mass_multiplyers = np.array(body_mass_multiplyers).reshape(self.model.body_mass.shape)
 
@@ -83,8 +90,12 @@ class WalkerMassInter(MujocoEnv, Serializable):
         logger.record_tabular('StdForwardProgress', np.std(progs))
 
     @overrides
-    def reset(self, init_state=None, **kwargs):
-        self.model.body_mass = self.sample_mass()
+    def reset(self, init_state=None, reset_args=None, **kwargs):
+        if reset_args is not None:
+            self.goal = reset_args
+        elif self.goal is None:
+            self.goal = self.sample_goals(1)[0]
+        self.model.body_mass = self.sample_mass(self.goal)
         self.reset_mujoco(init_state)
         self.model.data.qpos = self.init_qpos + np.random.uniform(low=-.005, high=.005, size=self.model.nq)
         self.model.data.qvel = self.init_qvel + np.random.uniform(low=-.005, high=.005, size=self.model.nv)
