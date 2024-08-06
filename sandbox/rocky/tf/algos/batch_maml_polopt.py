@@ -194,7 +194,7 @@ class BatchMAMLPolopt(RLAlgorithm):
                             for episode in env:
                                 self.frames += episode["rewards"].__len__()
                         all_paths.append(paths)
-                        logger.log("Processing samples...")
+                        logger.log(f"Processing samples... (frames: {self.frames})")
                         samples_data = {}
                         for key in paths.keys():  # the keys are the tasks
                             # don't log because this will spam the consol with every task.
