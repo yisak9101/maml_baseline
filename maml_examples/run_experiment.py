@@ -59,7 +59,7 @@ def main(env_name: str, seed: int, kl_constraint: str, reward_scaling: float):
     )
 
     baseline = LinearFeatureBaseline(env_spec=env.spec)
-    eval = Eval(exp_name=exp_name ,env=eval_env)
+    eval = Eval(exp_name=exp_name, env=eval_env)
     max_path_length = 200
 
     algo = MAMLTRPO(
@@ -77,7 +77,7 @@ def main(env_name: str, seed: int, kl_constraint: str, reward_scaling: float):
         eval=eval,
         env_name=env_name,
         seed=seed,
-        eval_interval_itr=25,
+        eval_interval_itr=1,
         kl_constraint=kl_constraint,
         reward_scaling=reward_scaling
     )

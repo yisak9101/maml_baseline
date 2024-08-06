@@ -16,9 +16,8 @@ class Eval:
     def run(self, file_path):
         stub(globals())
 
-        test_num_goals = 1
         np.random.seed(2)
-        goals = np.random.uniform(0.0, 3.0, size=(test_num_goals,))
+        goals = self.env.goals
 
         step_sizes = [0.1]
         initial_params_files = [file_path]
