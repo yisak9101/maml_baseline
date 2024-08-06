@@ -225,58 +225,6 @@ class BatchMAMLPolopt(RLAlgorithm):
 
                     logger.dump_tabular(with_prefix=False)
 
-                    # The rest is some example plotting code.
-                    # Plotting code is useful for visualizing trajectories across a few different tasks.
-                    if False and itr % 2 == 0 and self.env.observation_space.shape[0] <= 4: # point-mass
-                        logger.log("Saving visualization of paths")
-                        for ind in range(min(5, self.meta_batch_size)):
-                            plt.clf()
-                            plt.plot(learner_env_goals[ind][0], learner_env_goals[ind][1], 'k*', markersize=10)
-                            plt.hold(True)
-
-                            preupdate_paths = all_paths[0]
-                            postupdate_paths = all_paths[-1]
-
-                            pre_points = preupdate_paths[ind][0]['observations']
-                            post_points = postupdate_paths[ind][0]['observations']
-                            plt.plot(pre_points[:,0], pre_points[:,1], '-r', linewidth=2)
-                            plt.plot(post_points[:,0], post_points[:,1], '-b', linewidth=1)
-
-                            pre_points = preupdate_paths[ind][1]['observations']
-                            post_points = postupdate_paths[ind][1]['observations']
-                            plt.plot(pre_points[:,0], pre_points[:,1], '--r', linewidth=2)
-                            plt.plot(post_points[:,0], post_points[:,1], '--b', linewidth=1)
-
-                            pre_points = preupdate_paths[ind][2]['observations']
-                            post_points = postupdate_paths[ind][2]['observations']
-                            plt.plot(pre_points[:,0], pre_points[:,1], '-.r', linewidth=2)
-                            plt.plot(post_points[:,0], post_points[:,1], '-.b', linewidth=1)
-
-                            plt.plot(0,0, 'k.', markersize=5)
-                            plt.xlim([-0.8, 0.8])
-                            plt.ylim([-0.8, 0.8])
-                            plt.legend(['goal', 'preupdate path', 'postupdate path'])
-                            plt.savefig(osp.join(logger.get_snapshot_dir(), 'prepost_path'+str(ind)+'.png'))
-                    elif False and itr % 2 == 0:  # swimmer or cheetah
-                        logger.log("Saving visualization of paths")
-                        for ind in range(min(5, self.meta_batch_size)):
-                            plt.clf()
-                            goal_vel = learner_env_goals[ind]
-                            plt.title('Swimmer paths, goal vel='+str(goal_vel))
-                            plt.hold(True)
-
-                            prepathobs = all_paths[0][ind][0]['observations']
-                            postpathobs = all_paths[-1][ind][0]['observations']
-                            plt.plot(prepathobs[:,0], prepathobs[:,1], '-r', linewidth=2)
-                            plt.plot(postpathobs[:,0], postpathobs[:,1], '--b', linewidth=1)
-                            plt.plot(prepathobs[-1,0], prepathobs[-1,1], 'r*', markersize=10)
-                            plt.plot(postpathobs[-1,0], postpathobs[-1,1], 'b*', markersize=10)
-                            plt.xlim([-1.0, 5.0])
-                            plt.ylim([-1.0, 1.0])
-
-                            plt.legend(['preupdate path', 'postupdate path'], loc=2)
-                            plt.savefig(osp.join(logger.get_snapshot_dir(), 'swim1d_prepost_itr'+str(itr)+'_id'+str(ind)+'.pdf'))
-
                     if self.eval_interval_itr is not None and \
                             itr % self.eval_interval_itr == 0 and \
                             param_path is not None and \
@@ -284,7 +232,7 @@ class BatchMAMLPolopt(RLAlgorithm):
                         logger.log("Evaluating...")
                         test_avg_return = self.eval.run(param_path)
                         wandb_log_dict = {
-                            "Eval/train_avg_return": train_avg_return,
+                            "Eval/train_avg_return": np.array(train_avg_returns).mean(),
                             "Eval/test_avg_return": test_avg_return,
                         }
                         logger.log(f"timestep {self.frames}:{json.dumps(wandb_log_dict)}")
