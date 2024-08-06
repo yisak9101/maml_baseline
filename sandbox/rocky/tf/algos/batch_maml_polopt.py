@@ -284,7 +284,7 @@ class BatchMAMLPolopt(RLAlgorithm):
                         logger.log("Evaluating...")
                         test_avg_return = self.eval.run(param_path)
                         wandb_log_dict = {
-                            "Eval/train_avg_return": np.array(train_avg_returns).mean(),
+                            "Eval/train_avg_return": train_avg_return,
                             "Eval/test_avg_return": test_avg_return,
                         }
                         logger.log(f"timestep {self.frames}:{json.dumps(wandb_log_dict)}")
