@@ -115,7 +115,7 @@ class BatchMAMLPolopt(RLAlgorithm):
             sampler_args = dict()
         sampler_args['n_envs'] = self.meta_batch_size
         self.sampler = sampler_cls(self, **sampler_args)
-        self.steps = 0
+        self.frames = 0
         self.eval_interval_itr = eval_interval_itr
         self.eval = eval
         if eval is not None:
@@ -190,7 +190,9 @@ class BatchMAMLPolopt(RLAlgorithm):
                         logger.log('** Step ' + str(step) + ' **')
                         logger.log("Obtaining samples...")
                         paths = self.obtain_samples(itr, reset_args=learner_env_goals, log_prefix=str(step))
-                        self.steps += paths.__len__()
+                        for env in paths.values():
+                            for episode in env:
+                                self.frames += episode["rewards"].__len__()
                         all_paths.append(paths)
                         logger.log("Processing samples...")
                         samples_data = {}
@@ -285,8 +287,8 @@ class BatchMAMLPolopt(RLAlgorithm):
                             "Eval/train_avg_return": np.array(train_avg_returns).mean(),
                             "Eval/test_avg_return": test_avg_return,
                         }
-                        logger.log(f"timestep {self.steps}:{json.dumps(wandb_log_dict)}")
-                        wandb.log(wandb_log_dict, step=self.steps)
+                        logger.log(f"timestep {self.frames}:{json.dumps(wandb_log_dict)}")
+                        wandb.log(wandb_log_dict, step=self.frames)
         self.shutdown_worker()
 
     def log_diagnostics(self, paths, prefix):

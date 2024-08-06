@@ -69,8 +69,8 @@ class CheetahVelInter(MujocoEnv, Serializable):
         elif self.goal is None:
             self.goal = self.sample_goals(1)[0]
         self.reset_mujoco(init_state)
-        self.model.data.qpos = self.init_qpos + np.random.uniform(size=self.model.nq, low=-.1, high=.1)
-        self.model.data.qvel = self.init_qvel + np.random.randn(self.model.nv) * .1
+        self.model.data.qpos = self.init_qpos + np.random.uniform(size=self.model.nq, low=-.1, high=.1).reshape(-1, 1)
+        self.model.data.qvel = self.init_qvel + np.random.randn(self.model.nv).reshape(-1, 1) * .1
         self.model.forward()
         self.current_com = self.model.data.com_subtree[0]
         self.dcom = np.zeros_like(self.current_com)

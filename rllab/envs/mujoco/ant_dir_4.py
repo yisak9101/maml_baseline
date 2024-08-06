@@ -39,8 +39,8 @@ class AntDir4(MujocoEnv, Serializable):
         elif self.goal is None:
             self.goal = self.sample_goals(1)[0]
         self.reset_mujoco(init_state)
-        self.model.data.qpos = self.init_qpos + np.random.uniform(size=self.model.nq, low=-.1, high=.1)
-        self.model.data.qvel = self.init_qvel + np.random.randn(self.model.nv) * .1
+        self.model.data.qpos = self.init_qpos + np.random.uniform(size=self.model.nq, low=-.1, high=.1).reshape(-1, 1)
+        self.model.data.qvel = self.init_qvel + np.random.randn(self.model.nv).reshape(-1, 1) * .1
         self.model.forward()
         self.current_com = self.model.data.com_subtree[0]
         self.dcom = np.zeros_like(self.current_com)
@@ -64,7 +64,7 @@ class AntDir4(MujocoEnv, Serializable):
         ctrl_cost = 0.5 * 1e-2 * np.sum(np.square(action / scaling))
         contact_cost = 0.5 * 1e-3 * np.sum(
             np.square(np.clip(self.model.data.cfrc_ext, -1, 1))),
-        survive_reward = 0.05
+        survive_reward = 1.0
         reward = forward_reward - ctrl_cost - contact_cost + survive_reward
 
         state = self.state_vector()
@@ -74,7 +74,6 @@ class AntDir4(MujocoEnv, Serializable):
         ob = self.get_current_obs()
         return Step(ob, float(reward), done)
 
-    @overrides
     def log_diagnostics(self, paths, prefix=''):
         progs = [
             path["observations"][-1][-3] - path["observations"][0][-3]

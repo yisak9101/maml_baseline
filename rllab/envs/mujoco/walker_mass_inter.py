@@ -60,22 +60,19 @@ class WalkerMassInter(MujocoEnv, Serializable):
         ])
 
     def step(self, action):
-        posbefore = self.model.data.qpos[0, 0]
         self.forward_dynamics(action)
-        posafter, height, ang = self.model.data.qpos[0:3, 0]
-        alive_bonus = 1.0
-        forward_reward = ((posafter - posbefore) / self.dt)
-
+        next_obs = self.get_current_obs()
         action = np.clip(action, *self.action_bounds)
         lb, ub = self.action_bounds
         scaling = (ub - lb) * 0.5
-        ctrl_cost = 1e-3 * self.ctrl_cost_coeff * \
+        ctrl_cost = 0.5 * self.ctrl_cost_coeff * \
                     np.sum(np.square(action / scaling))
-
-        reward = forward_reward + alive_bonus - ctrl_cost
-
-        done = not (0.8 < height < 2.0 and -1.0 < ang < 1.0)
-        next_obs = self.get_current_obs()
+        forward_reward = self.get_body_comvel("torso")[0]
+        alive_bonus = 1.0
+        reward = forward_reward - ctrl_cost + alive_bonus
+        qpos = self.model.data.qpos
+        done = not (qpos[0] > 0.8 and qpos[0] < 2.0
+                    and qpos[2] > -1.0 and qpos[2] < 1.0)
         return Step(next_obs, reward, done)
 
     @overrides
@@ -97,8 +94,8 @@ class WalkerMassInter(MujocoEnv, Serializable):
             self.goal = self.sample_goals(1)[0]
         self.model.body_mass = self.sample_mass(self.goal)
         self.reset_mujoco(init_state)
-        self.model.data.qpos = self.init_qpos + np.random.uniform(low=-.005, high=.005, size=self.model.nq)
-        self.model.data.qvel = self.init_qvel + np.random.uniform(low=-.005, high=.005, size=self.model.nv)
+        self.model.data.qpos = self.init_qpos + np.random.uniform(low=-.005, high=.005, size=self.model.nq).reshape(-1, 1)
+        self.model.data.qvel = self.init_qvel + np.random.uniform(low=-.005, high=.005, size=self.model.nv).reshape(-1, 1)
         self.model.forward()
         self.current_com = self.model.data.com_subtree[0]
         self.dcom = np.zeros_like(self.current_com)

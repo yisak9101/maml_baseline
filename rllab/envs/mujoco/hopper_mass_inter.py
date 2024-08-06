@@ -69,21 +69,18 @@ class HopperMassInter(MujocoEnv, Serializable):
 
     @overrides
     def step(self, action):
-        posbefore = self.model.data.qpos[0, 0]
         self.forward_dynamics(action)
-        posafter, height, ang = self.model.data.qpos[0:3, 0]
-        forward_reward = (posafter - posbefore) / self.dt
-        alive_reward = self.alive_coeff
+        next_obs = self.get_current_obs()
         lb, ub = self.action_bounds
         scaling = (ub - lb) * 0.5
-        ctrl_cost = 1e-3 * self.ctrl_cost_coeff * np.sum(np.square(action / scaling))
-
-        reward = forward_reward + alive_reward - ctrl_cost
-        s = self.state_vector()
-        done = not (np.isfinite(s).all() and (np.abs(s[2:]) < 100).all() and
-                    (height > .7) and (abs(ang) < .2))
-
-        next_obs = self.get_current_obs()
+        vel = self.get_body_comvel("torso")[0]
+        reward = vel + self.alive_coeff - \
+            0.5 * self.ctrl_cost_coeff * np.sum(np.square(action / scaling))
+        state = self._state
+        notdone = np.isfinite(state).all() and \
+            (np.abs(state[3:]) < 100).all() and (state[0] > .7) and \
+            (abs(state[2]) < .2)
+        done = not notdone
         return Step(next_obs, reward, done)
 
     @overrides
@@ -94,8 +91,8 @@ class HopperMassInter(MujocoEnv, Serializable):
             self.goal = self.sample_goals(1)[0]
         self.model.body_mass = self.sample_mass(self.goal)
         self.reset_mujoco(init_state)
-        self.model.data.qpos = self.init_qpos + np.random.uniform(low=-.005, high=.005, size=self.model.nq)
-        self.model.data.qvel = self.init_qvel + np.random.uniform(low=-.005, high=.005, size=self.model.nv)
+        self.model.data.qpos = self.init_qpos + np.random.uniform(low=-.005, high=.005, size=self.model.nq).reshape(-1, 1)
+        self.model.data.qvel = self.init_qvel + np.random.uniform(low=-.005, high=.005, size=self.model.nv).reshape(-1, 1)
         self.model.forward()
         self.current_com = self.model.data.com_subtree[0]
         self.dcom = np.zeros_like(self.current_com)

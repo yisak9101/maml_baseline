@@ -99,8 +99,8 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Parse command-line arguments.")
     parser.add_argument('--env', type=str, required=True)
     parser.add_argument('--seed', type=int, required=True)
-    parser.add_argument('--kl_constraint', type=str, required=True, help="kl constraint (min, max, mean)")
-    parser.add_argument('--reward_scaling', type=float, required=True)
+    parser.add_argument('--kl_constraint', type=str, default='mean', help="kl constraint (min, max, mean)")
+    parser.add_argument('--reward_scaling', type=float, default=1.0)
     args = parser.parse_args()
 
     main(env_name=args.env, seed=args.seed, kl_constraint=args.kl_constraint, reward_scaling=args.reward_scaling)
