@@ -77,7 +77,7 @@ def main(env_name: str, seed: int, kl_constraint: str, reward_scaling: float):
         eval=eval,
         env_name=env_name,
         seed=seed,
-        eval_interval_itr=1,
+        eval_interval_itr=5,
         kl_constraint=kl_constraint,
         reward_scaling=reward_scaling
     )
@@ -88,7 +88,7 @@ def main(env_name: str, seed: int, kl_constraint: str, reward_scaling: float):
         exp_name=exp_name,
         n_parallel=8,
         snapshot_mode="gap",
-        snapshot_gap=25,
+        snapshot_gap=5,
         sync_s3_pkl=True,
         seed=seed,
         mode="local",
