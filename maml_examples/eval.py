@@ -17,7 +17,11 @@ class Eval:
         stub(globals())
 
         np.random.seed(2)
-        goals = self.env.goals
+
+        env = self.env
+        while 'goals' not in dir(env):
+            env = env.wrapped_env
+        goals = env.goals
 
         step_sizes = [0.1]
         initial_params_files = [file_path]
