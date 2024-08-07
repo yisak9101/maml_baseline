@@ -20,7 +20,7 @@ class AntDir2(MujocoEnv, Serializable):
         self.reset()
 
     def sample_goals(self, num_goals):
-        return random.Generator.choice(self.goals, num_goals)
+        return np.random.choice(self.goals, num_goals)
 
     def get_current_obs(self):
         return np.concatenate([
