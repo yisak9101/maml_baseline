@@ -71,8 +71,9 @@ class WalkerMassInter(MujocoEnv, Serializable):
         alive_bonus = 1.0
         reward = forward_reward - ctrl_cost + alive_bonus
         qpos = self.model.data.qpos
-        done = not (qpos[0] > 0.8 and qpos[0] < 2.0
-                    and qpos[2] > -1.0 and qpos[2] < 1.0)
+        done = False
+        # done = not (qpos[0] > 0.8 and qpos[0] < 2.0
+        #             and qpos[2] > -1.0 and qpos[2] < 1.0)
         return Step(next_obs, reward, done)
 
     @overrides

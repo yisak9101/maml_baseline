@@ -76,11 +76,11 @@ class HopperMassInter(MujocoEnv, Serializable):
         vel = self.get_body_comvel("torso")[0]
         reward = vel + self.alive_coeff - \
             0.5 * self.ctrl_cost_coeff * np.sum(np.square(action / scaling))
-        state = self._state
-        notdone = np.isfinite(state).all() and \
-            (np.abs(state[3:]) < 100).all() and (state[0] > .7) and \
-            (abs(state[2]) < .2)
-        done = not notdone
+        # state = self._state
+        # notdone = np.isfinite(state).all() and \
+        #     (np.abs(state[3:]) < 100).all() and (state[0] > .7) and \
+        #     (abs(state[2]) < .2)
+        done = False
         return Step(next_obs, reward, done)
 
     @overrides
