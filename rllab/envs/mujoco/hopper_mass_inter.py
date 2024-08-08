@@ -28,7 +28,7 @@ class HopperMassInter(MujocoEnv, Serializable):
         self.goals = []
         self.goal = None
         self.init_mass = None
-        for i in range(150):
+        for i in range(100):
             prob = random.random()  # np.random.uniform()
             if prob >= 0.5:
                 g = random.uniform(0, 0.5)
@@ -89,6 +89,7 @@ class HopperMassInter(MujocoEnv, Serializable):
             self.goal = reset_args
         elif self.goal is None:
             self.goal = self.sample_goals(1)[0]
+        print(f"Goal: {self.goal}")
         self.model.body_mass = self.sample_mass(self.goal)
         self.reset_mujoco(init_state)
         self.model.data.qpos = self.init_qpos + np.random.uniform(low=-.005, high=.005, size=self.model.nq).reshape(-1, 1)

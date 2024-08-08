@@ -24,7 +24,7 @@ class WalkerMassInter(MujocoEnv, Serializable):
         self.goals = []
         self.goal = None
         self.init_mass = None
-        for i in range(150):
+        for i in range(100):
             prob = random.random()  # np.random.uniform()
             if prob >= 0.5:
                 g = random.uniform(0, 0.5)
